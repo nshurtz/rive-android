@@ -65,6 +65,12 @@ void AudioEngine::release()
         std::lock_guard<std::mutex> lock(m_mutex);
         if (auto engine = rive::AudioEngine::RuntimeEngine(false))
         {
+            // Stop every playing sound before pausing the device. ma_engine_stop()
+            // only pauses output; any sound still in the engine's playing list keeps
+            // its position and resumes when the next Rive view restarts the device.
+            // At ref count 0 no Rive views are active, so all playing sounds are
+            // orphaned and safe to stop. Passing nullptr stops them all.
+            engine->stop(nullptr);
             engine->stop();
             RiveLogI(AUDIO_TAG, "AudioEngine: Stopped (new ref count: 0)");
         }
